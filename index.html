@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>After School Lessons</title>
+
+  <!-- Font Awesome (for icons) -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    referrerpolicy="no-referrer"
+  />
+
+  <!-- Your CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Vue 2 (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
+
+  <!-- Your Vue app code -->
+  <script src="lessons.js" defer></script>
+</head>
+<body>
+  <div id="app" class="app">
+
+    <header class="top-bar">
+      <h1>After School Lessons</h1>
+      <button class="cart-button" @click="toggleCart">
+        <i class="fa-solid fa-cart-shopping"></i>
+        Cart ({{ cart.length }})
+      </button>
+    </header>
+
+    <!-- Controls -->
+    <section class="controls" v-if="!showCart">
+      <div class="control-group">
+        <label>Search:</label>
+        <input
+          type="text"
+          v-model="searchTerm"
+          placeholder="Search by subject or location..."
+        />
+      </div>
+
+      <div class="control-group">
+        <label>Sort by:</label>
+        <select v-model="sortBy">
+          <option value="subject">Subject</option>
+          <option value="location">Location</option>
+          <option value="price">Price</option>
+          <option value="spaces">Spaces</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Order:</label>
+        <select v-model="sortOrder">
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Lessons view -->
+    <main v-if="!showCart">
+      <section class="lessons-grid">
+        <article
+          class="lesson-card"
+          v-for="lesson in filteredAndSortedLessons"
+          :key="lesson._id || lesson.id"
+        >
+          <div class="lesson-icon">
+            <i :class="lesson.icon"></i>
+          </div>
+          <h2 class="lesson-title">{{ lesson.subject }}</h2>
+          <p class="lesson-location">
+            <i class="fa-solid fa-location-dot"></i>
+            {{ lesson.location }}
+          </p>
+          <p class="lesson-price">£{{ lesson.price }}</p>
+          <p class="lesson-spaces" :class="{ 'no-spaces': lesson.spaces === 0 }">
+            Spaces left: {{ lesson.spaces }}
+          </p>
+
+          <button
+            class="primary-btn"
+            @click="addToCart(lesson)"
+            :disabled="lesson.spaces === 0"
+          >
+            <span v-if="lesson.spaces > 0">Add to Cart</span>
+            <span v-else>Fully Booked</span>
+          </button>
+        </article>
+      </section>
+    </main>
+
+    <!-- Cart + Checkout -->
+    <section v-else class="cart-section">
+      <h2>Your Cart</h2>
+
+      <div v-if="cart.length === 0" class="empty-cart">
+        Your cart is empty.
+      </div>
+
+      <ul v-else class="cart-list">
+        <li v-for="(item, index) in cart" :key="index" class="cart-item">
+          <div>
+            <strong>{{ item.subject }}</strong>
+            <span class="cart-location">({{ item.location }})</span>
+          </div>
+          <div class="cart-actions">
+            <span>£{{ item.price }}</span>
+            <button class="secondary-btn" @click="removeFromCart(index)">
+              Remove
+            </button>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Checkout form -->
+      <h3>Checkout</h3>
+      <form class="checkout-form" @submit.prevent="submitOrder">
+        <div class="form-group">
+          <label for="name">Name:</label>
+          <input
+            id="name"
+            type="text"
+            v-model="checkoutName"
+            placeholder="Enter your full name"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone:</label>
+          <input
+            id="phone"
+            type="text"
+            v-model="checkoutPhone"
+            placeholder="Digits only"
+          />
+        </div>
+
+        <p class="validation-message" v-if="!isCheckoutValid && cart.length > 0">
+          Name must contain only letters and spaces. Phone must contain digits only.
+        </p>
+
+        <button
+          class="primary-btn"
+          type="submit"
+          :disabled="!isCheckoutValid || cart.length === 0"
+        >
+          Place Order
+        </button>
+
+        <p class="order-message" v-if="orderMessage">
+          {{ orderMessage }}
+        </p>
+      </form>
+    </section>
+
+  </div>
+</body>
+</html>
