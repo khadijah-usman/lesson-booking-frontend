@@ -134,7 +134,9 @@ const app = new Vue({
       phone: "",
       orderConfirmed: false,
       nameError: "",
-      phoneError: ""
+      emailError: "",
+      phoneError: "",
+      orderMessage: ""
     },
   
     computed: {
@@ -200,9 +202,10 @@ const app = new Vue({
       isFormValid: function () {
         var nameOk = /^[A-Za-z ]+$/.test(this.name.trim());
         var phoneOk = /^[0-9]{8,15}$/.test(this.phone.trim());
-        return nameOk && phoneOk;
+        var emailOk = /^\S+@\S+\.\S+$/.test(this.email.trim());
+        return nameOk && phoneOk && emailOk;
       }
-    },
+      },
   
     methods: {
       // Go back to lesson list from cart view
@@ -293,33 +296,43 @@ const app = new Vue({
       checkout: function () {
         this.nameError = "";
         this.phoneError = "";
+        this.emailError = "";
         this.orderConfirmed = false;
-  
+        this.orderMessage = "";
+      
         var namePattern = /^[A-Za-z ]+$/;
         var phonePattern = /^[0-9]{8,15}$/;
-  
+        var emailPattern = /^\S+@\S+\.\S+$/;
+      
         if (!namePattern.test(this.name.trim())) {
           this.nameError = "Name must contain letters and spaces only.";
         }
-  
+      
         if (!phonePattern.test(this.phone.trim())) {
           this.phoneError = "Phone number must contain 8–15 digits.";
         }
-  
-        if (this.nameError || this.phoneError || !this.cart.length) {
-          return; // stop checkout
+      
+        if (!emailPattern.test(this.email.trim())) {
+          this.emailError = "Please enter a valid email address.";
         }
-  
-        // (Future) Backend order API call goes here (fetch POST /orders)
-  
+      
+        // Stop if any validation errors or empty cart
+        if (this.nameError || this.phoneError || this.emailError || !this.cart.length) {
+          return;
+        }
+      
+        // (Future) Backend order API call goes here: POST /orders
+      
         this.orderConfirmed = true;
-  
+        this.orderMessage = "Order placed! You will receive an email with further details.";
+      
         // Reset cart & form after brief delay
         var self = this;
         setTimeout(function () {
           self.cart = [];
           self.name = "";
           self.phone = "";
+          self.email = "";
         }, 1200);
       }
     }
