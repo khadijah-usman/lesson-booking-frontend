@@ -11,7 +11,8 @@
       - Search and sorting (by subject, location, price, and spaces)
       - Add-to-cart logic with spaces decrement
       - Cart view with quantity updates and line totals
-      - Checkout form with client-side validation (Name + Phone)
+      - Checkout form with client-side validation (Name, Phone, Email)
+      - Thank-you message after successful order
       
       All interactivity is controlled via lessons.js (Vue 2).
   -->
@@ -21,6 +22,11 @@
 
   <!-- Custom styling -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Google Font (optional, for nicer typography) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <!-- Font Awesome icon library for UI icons (cart, location, etc.) -->
   <link 
@@ -267,7 +273,7 @@
               </h3>
             </div>
 
-            <!-- Checkout form -->
+            <!-- Checkout form + thank you box -->
             <div class="checkout-box">
               <h3>Checkout</h3>
 
@@ -279,13 +285,12 @@
                     v-model="name"
                     type="text"
                     placeholder="Full name (letters only)"
-                    @input="nameError = ''; orderConfirmed = false"
                   />
                 </label>
                 <p v-if="nameError" class="error">
                   {{ nameError }}
                 </p>
-              
+
                 <!-- Phone field -->
                 <label>
                   Phone
@@ -293,13 +298,12 @@
                     v-model="phone"
                     type="tel"
                     placeholder="Mobile number (numbers only)"
-                    @input="phoneError = ''; orderConfirmed = false"
                   />
                 </label>
                 <p v-if="phoneError" class="error">
                   {{ phoneError }}
                 </p>
-              
+
                 <!-- Email field -->
                 <label>
                   Email
@@ -307,28 +311,35 @@
                     v-model="email"
                     type="email"
                     placeholder="Email address"
-                    @input="emailError = ''; orderConfirmed = false"
                   />
                 </label>
                 <p v-if="emailError" class="error">
                   {{ emailError }}
                 </p>
-              
+
                 <!-- Submit order button -->
                 <button
                   class="checkout-btn"
                   type="submit"
-                  :disabled="!cart.length || !isFormValid"
+                  :disabled="!cart.length || !isFormValid || orderConfirmed"
                 >
                   <i class="fa-solid fa-paper-plane"></i>
                   Submit Order
                 </button>
               </form>
-              
-              <!-- Success message after order -->
-              <p v-if="orderConfirmed" class="success">
-                {{ orderMessage }}
-              </p>
+
+              <!-- Cute thank you box after successful order -->
+              <div v-if="orderConfirmed" class="thankyou-box">
+                <div class="thankyou-icon">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h4>Thank you, {{ lastOrderName }}! 💌</h4>
+                <p>Your order has been placed successfully.</p>
+                <p>
+                  A confirmation email will be sent to
+                  <strong>{{ lastOrderEmail }}</strong> shortly.
+                </p>
+              </div>
             </div>
           </div>
         </section>
