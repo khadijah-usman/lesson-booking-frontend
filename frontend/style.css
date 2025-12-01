@@ -678,3 +678,40 @@
   .fade-leave-to {
     opacity: 0;
   }
+  .thankyou-box {
+    margin-top: 16px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: var(--accent);
+    border: 1px solid var(--highlight);
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  }
+  
+  .thankyou-box h4 {
+    margin: 0 0 6px;
+    color: var(--primary);
+    font-size: 1.1rem;
+  }
+  
+  .thankyou-box p {
+    margin: 4px 0;
+    font-size: 0.95rem;
+    color: var(--text-light);
+  }
+  
+  .thankyou-icon {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 8px;
+    border-radius: 50%;
+    background: #e0f2fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .thankyou-icon i {
+    color: #16a34a;
+    font-size: 1.2rem;
+  }
