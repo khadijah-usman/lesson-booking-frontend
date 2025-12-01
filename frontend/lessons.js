@@ -4,16 +4,16 @@ CST3144 FULL-STACK COURSEWORK — FRONTEND LOGIC (Vue.js SPA)
 ==============================================================
 */
 
-// Vue 2 style: new Vue({...})
 const app = new Vue({
-  el: '#app',
+  el: "#app",
 
   data: {
-    // ----- LESSON DATA (now fetched from backend API) -----
+    // ----- LESSON DATA (from backend API) -----
     lessons: [],
 
     // ----- UI + CART STATE -----
-    cart: [],              // [{ id, subject, price, location, quantity, image }]
+    // cart items will be: { _id, subject, price, location, quantity, image }
+    cart: [],
     showCart: false,
     searchTerm: "",
     sortBy: "subject",
@@ -35,14 +35,23 @@ const app = new Vue({
   },
 
   // Fetch lessons from backend when app is created
-  created() {
-    fetch('http://localhost:4000/lessons')
-      .then(response => response.json())
-      .then(data => {
-        this.lessons = data;
+  created: function () {
+    fetch("http://localhost:4000/lessons")
+      .then(function (response) {
+        return response.json();
       })
-      .catch(error => {
-        console.error('Error loading lessons:', error);
+      .then(
+        function (data) {
+          this.lessons = data;
+
+          // reset state (safe)
+          this.cart = [];
+          this.orderConfirmed = false;
+          this.orderMessage = "";
+        }.bind(this)
+      )
+      .catch(function (error) {
+        console.error("Error loading lessons:", error);
       });
   },
 
@@ -54,8 +63,8 @@ const app = new Vue({
 
       return this.lessons.filter(function (l) {
         return (
-          l.subject.toLowerCase().includes(term) ||
-          l.location.toLowerCase().includes(term) ||
+          String(l.subject || "").toLowerCase().includes(term) ||
+          String(l.location || "").toLowerCase().includes(term) ||
           String(l.price).includes(term) ||
           String(l.spaces).includes(term)
         );
@@ -66,14 +75,23 @@ const app = new Vue({
     sortedAndFilteredLessons: function () {
       var factor = this.sortOrder === "asc" ? 1 : -1;
 
-      return this.filteredLessons.slice().sort((a, b) => {
-        if (a[this.sortBy] < b[this.sortBy]) return -1 * factor;
-        if (a[this.sortBy] > b[this.sortBy]) return 1 * factor;
-        return 0;
-      });
+      return this.filteredLessons.slice().sort(
+        function (a, b) {
+          var x = a[this.sortBy];
+          var y = b[this.sortBy];
+
+          // Make string sorts consistent
+          if (typeof x === "string") x = x.toLowerCase();
+          if (typeof y === "string") y = y.toLowerCase();
+
+          if (x < y) return -1 * factor;
+          if (x > y) return 1 * factor;
+          return 0;
+        }.bind(this)
+      );
     },
 
-    // Total items in cart
+    // Total items in cart (for badge + disabling cart button)
     cartItemCount: function () {
       return this.cart.reduce(function (total, item) {
         return total + item.quantity;
@@ -81,13 +99,20 @@ const app = new Vue({
     },
 
     // Total price of cart
-    cartTotalPrice: function () {
+    cartTotal: function () {
       return this.cart.reduce(function (total, item) {
         return total + item.price * item.quantity;
       }, 0);
     },
 
-    // Feedback message under the lesson list
+    // Optional form validity check
+    isFormValid: function () {
+      var nameOk = /^[A-Za-z ]+$/.test(this.name.trim());
+      var phoneOk = /^[0-9]{8,15}$/.test(this.phone.trim());
+      var emailOk = /^\S+@\S+\.\S+$/.test(this.email.trim());
+      return nameOk && phoneOk && emailOk && this.cartItemCount > 0;
+    },
+
     feedbackMessage: function () {
       if (this.sortedAndFilteredLessons.length === 0) {
         if (this.searchTerm.trim()) {
@@ -100,40 +125,39 @@ const app = new Vue({
   },
 
   methods: {
-    // Click the header logo/title to go "home" (show lesson list)
     goHome: function () {
       this.showCart = false;
     },
 
-    // Toggle between lesson list and cart view
     toggleCart: function () {
       if (this.cartItemCount === 0) return;
       this.showCart = !this.showCart;
     },
 
-    // Change sorting field
     changeSort: function (field) {
       this.sortBy = field;
     },
 
-    // Change sort order
     changeSortOrder: function (order) {
       this.sortOrder = order;
     },
 
-    // Add a lesson to the cart
+    // ✅ Add a lesson to cart (uses MongoDB _id)
     addToCart: function (lesson) {
-      if (lesson.spaces <= 0) return;
+      if (!lesson || lesson.spaces <= 0) return;
+
+      // If user starts a new order, re-enable checkout
+      this.orderConfirmed = false;
 
       var existing = this.cart.find(function (item) {
-        return item.id === lesson.id;
+        return item._id === lesson._id;
       });
 
       if (existing) {
         existing.quantity += 1;
       } else {
         this.cart.push({
-          id: lesson.id,
+          _id: lesson._id,
           subject: lesson.subject,
           price: lesson.price,
           location: lesson.location,
@@ -142,14 +166,17 @@ const app = new Vue({
         });
       }
 
-      // Decrement available spaces
+      // Decrement available spaces in the UI
       lesson.spaces -= 1;
     },
 
-    // Increase quantity of an item in the cart
-    increaseQuantity: function (cartItem) {
+    // ✅ Increase quantity (find lesson by _id)
+    increaseQuantity: function (index) {
+      var cartItem = this.cart[index];
+      if (!cartItem) return;
+
       var lesson = this.lessons.find(function (l) {
-        return l.id === cartItem.id;
+        return l._id === cartItem._id;
       });
 
       if (lesson && lesson.spaces > 0) {
@@ -158,39 +185,39 @@ const app = new Vue({
       }
     },
 
-    // Decrease quantity of an item in the cart
-    decreaseQuantity: function (cartItem) {
+    // ✅ Decrease quantity (find lesson by _id)
+    decreaseQuantity: function (index) {
+      var cartItem = this.cart[index];
+      if (!cartItem) return;
+
       var lesson = this.lessons.find(function (l) {
-        return l.id === cartItem.id;
+        return l._id === cartItem._id;
       });
 
       if (cartItem.quantity > 1) {
         cartItem.quantity -= 1;
-        if (lesson) {
-          lesson.spaces += 1;
-        }
+        if (lesson) lesson.spaces += 1;
       } else {
-        // quantity is 1, so removing it entirely
-        this.removeFromCart(cartItem);
+        this.removeFromCart(index);
       }
     },
 
-    // Remove an item from the cart entirely
-    removeFromCart: function (cartItem) {
-      var index = this.cart.indexOf(cartItem);
-      if (index !== -1) {
-        // Return all its spaces back to the lesson
-        var lesson = this.lessons.find(function (l) {
-          return l.id === cartItem.id;
-        });
-        if (lesson) {
-          lesson.spaces += cartItem.quantity;
-        }
-        this.cart.splice(index, 1);
+    // ✅ Remove item (restore spaces using _id match)
+    removeFromCart: function (index) {
+      var cartItem = this.cart[index];
+      if (!cartItem) return;
+
+      var lesson = this.lessons.find(function (l) {
+        return l._id === cartItem._id;
+      });
+
+      if (lesson) {
+        lesson.spaces += cartItem.quantity;
       }
+
+      this.cart.splice(index, 1);
     },
 
-    // Validate the checkout form
     validateCheckout: function () {
       var valid = true;
 
@@ -198,12 +225,13 @@ const app = new Vue({
       this.nameError = "";
       this.phoneError = "";
       this.emailError = "";
+      this.orderMessage = "";
 
       var trimmedName = this.name.trim();
       var trimmedPhone = this.phone.trim();
       var trimmedEmail = this.email.trim();
 
-      // Name validation: not empty, letters & spaces only
+      // Name validation
       if (!trimmedName) {
         this.nameError = "Name is required.";
         valid = false;
@@ -212,7 +240,7 @@ const app = new Vue({
         valid = false;
       }
 
-      // Phone validation: not empty, digits only, at least 7 digits
+      // Phone validation
       if (!trimmedPhone) {
         this.phoneError = "Phone number is required.";
         valid = false;
@@ -224,8 +252,11 @@ const app = new Vue({
         valid = false;
       }
 
-      // Email validation: optional, but if present check format
-      if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      // Email validation
+      if (!trimmedEmail) {
+        this.emailError = "Email is required.";
+        valid = false;
+      } else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
         this.emailError = "Please enter a valid email address.";
         valid = false;
       }
@@ -234,31 +265,88 @@ const app = new Vue({
       if (this.cartItemCount === 0) {
         this.orderMessage = "Your cart is empty. Add at least one lesson.";
         valid = false;
-      } else {
-        this.orderMessage = "";
       }
 
       return valid;
     },
 
-    // Process the checkout form
-    checkout: function () {
-      if (!this.validateCheckout()) {
-        return;
+    // Checkout: POST order then PUT updated spaces
+    checkout: async function () {
+      if (!this.validateCheckout()) return;
+
+      var cleanName = this.name.trim();
+      var cleanPhone = this.phone.trim();
+      var cleanEmail = this.email.trim();
+
+      var orderPayload = {
+        name: cleanName,
+        phone: cleanPhone,
+        email: cleanEmail,
+        lessons: this.cart.map(function (item) {
+          return {
+            lessonId: item._id,
+            quantity: item.quantity
+          };
+        })
+      };
+
+      try {
+        // 1) POST the order
+        var orderResponse = await fetch("http://localhost:4000/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderPayload)
+        });
+
+        if (!orderResponse.ok) {
+          var errBody = await orderResponse.json().catch(function () {
+            return {};
+          });
+          console.error("Order error:", errBody);
+          this.orderMessage =
+            "There was a problem placing your order. Please try again.";
+          return;
+        }
+
+        // 2) Show thank you message
+        this.lastOrderName = cleanName;
+        this.lastOrderEmail = cleanEmail;
+        this.orderConfirmed = true;
+        this.orderMessage = "";
+
+        // Keep a copy of what was ordered (so we can update the DB)
+        var savedCart = this.cart.map(function (item) {
+          return Object.assign({}, item);
+        });
+
+        // 3) Clear UI form + cart
+        this.name = "";
+        this.phone = "";
+        this.email = "";
+        this.cart = [];
+
+        // 4) Update lesson spaces in MongoDB
+        await Promise.all(
+          savedCart.map(
+            async function (item) {
+              var lesson = this.lessons.find(function (l) {
+                return l._id === item._id;
+              });
+              if (!lesson) return;
+
+              await fetch("http://localhost:4000/lessons/" + lesson._id, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ spaces: lesson.spaces })
+              });
+            }.bind(this)
+          )
+        );
+      } catch (error) {
+        console.error("Checkout error:", error);
+        this.orderMessage =
+          "There was a problem connecting to the server. Please try again.";
       }
-
-      // Save name & email for the thank-you box
-      this.lastOrderName = this.name.trim();
-      this.lastOrderEmail = this.email.trim();
-
-      // Show confirmation box
-      this.orderConfirmed = true;
-      this.orderMessage = "Order placed! You will receive an email with further details.";
-
-      // Clear ONLY the form fields (keep cart so thankyou box stays visible)
-      this.name = "";
-      this.phone = "";
-      this.email = "";
     }
   }
 });

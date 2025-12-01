@@ -39,37 +39,20 @@
 </head>
 
 <body>
-  <!-- 
-      All Vue behaviour is mounted on this root element (#app).
-      Vue controls:
-      - lesson data and filtering
-      - sorting
-      - cart contents
-      - form validation and checkout state
-  -->
   <div id="app">
-
-    <!-- =======================================================
-         HEADER: Logo, search, sorting, and cart button
-         ======================================================= -->
     <header class="header">
-
-      <!-- Logo / home button -->
       <h1 class="logo" @click="goHome" style="cursor: pointer;">
         <i class="fa-solid fa-graduation-cap"></i> LessonHub
       </h1>
 
       <div class="controls">
-        <!-- Search bar (front-end search: Approach 1) -->
         <input
           v-model="searchTerm"
           class="search"
           placeholder="Search by subject, location, price, or spaces..."
         />
 
-        <!-- Sorting controls -->
         <div class="sort-group">
-          <!-- Sort by attribute -->
           <div class="custom-select">
             <select v-model="sortBy">
               <option value="subject">Subject</option>
@@ -80,7 +63,6 @@
             <i class="fa-solid fa-angle-down"></i>
           </div>
 
-          <!-- Sort order -->
           <div class="custom-select">
             <select v-model="sortOrder">
               <option value="asc">Ascending</option>
@@ -90,7 +72,6 @@
           </div>
         </div>
 
-        <!-- Cart toggle button -->
         <button
           class="cart-btn"
           @click="showCart = !showCart"
@@ -106,9 +87,6 @@
       </div>
     </header>
 
-    <!-- =======================================================
-         MAIN CONTENT: Lessons view OR Cart view
-         ======================================================= -->
     <main>
       <transition name="fade" mode="out-in">
 
@@ -132,20 +110,17 @@
           </p>
 
           <div v-else class="lesson-grid">
-            <!-- v-for list of lessons (required by spec) -->
             <div
               class="lesson-card"
               v-for="lesson in sortedAndFilteredLessons"
-              :key="lesson.id"
+              :key="lesson._id || lesson.id"
             >
-              <!-- Lesson image -->
               <img
                 :src="lesson.image"
                 :alt="lesson.subject + ' lesson icon'"
                 class="lesson-img"
               />
 
-              <!-- Lesson details -->
               <div class="lesson-info">
                 <h3>
                   <i :class="lesson.icon"></i>
@@ -171,7 +146,6 @@
                 </p>
               </div>
 
-              <!-- Add-to-cart button (disabled when spaces = 0) -->
               <button
                 @click="addToCart(lesson)"
                 :disabled="lesson.spaces === 0"
@@ -193,12 +167,11 @@
             <h2>Your Cart</h2>
           </div>
 
-          <p v-if="!cart.length" class="cart-empty">
+          <p v-if="!cart.length && !orderConfirmed" class="cart-empty">
             Your cart is empty. Add some lessons to continue 🌱
           </p>
 
           <div v-else>
-            <!-- Cart list -->
             <ul class="cart-list">
               <li class="cart-header-row">
                 <span>Lesson</span>
@@ -210,7 +183,7 @@
 
               <li
                 v-for="(item, index) in cart"
-                :key="item.id"
+                :key="item._id || item.id"
                 class="cart-item"
               >
                 <div class="cart-item-info">
@@ -273,12 +246,10 @@
               </h3>
             </div>
 
-            <!-- Checkout form + thank you box -->
             <div class="checkout-box">
               <h3>Checkout</h3>
 
               <form @submit.prevent="checkout">
-                <!-- Name field -->
                 <label>
                   Name
                   <input
@@ -291,7 +262,6 @@
                   {{ nameError }}
                 </p>
 
-                <!-- Phone field -->
                 <label>
                   Phone
                   <input
@@ -304,7 +274,6 @@
                   {{ phoneError }}
                 </p>
 
-                <!-- Email field -->
                 <label>
                   Email
                   <input
@@ -317,18 +286,16 @@
                   {{ emailError }}
                 </p>
 
-                <!-- Submit order button -->
                 <button
                   class="checkout-btn"
                   type="submit"
-                  :disabled="!cart.length || !isFormValid || orderConfirmed"
+                  :disabled="!cart.length || orderConfirmed"
                 >
                   <i class="fa-solid fa-paper-plane"></i>
                   Submit Order
                 </button>
               </form>
 
-              <!-- Cute thank you box after successful order -->
               <div v-if="orderConfirmed" class="thankyou-box">
                 <div class="thankyou-icon">
                   <i class="fa-solid fa-circle-check"></i>
@@ -347,7 +314,6 @@
     </main>
   </div>
 
-  <!-- Vue logic (Vue 2, matching this template) -->
   <script src="lessons.js"></script>
 </body>
 </html>
