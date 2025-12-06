@@ -3,18 +3,10 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- 
-      CST3144 FULL-STACK COURSEWORK — FRONTEND (Vue.js SPA)
-
-      This single-page application (SPA) implements:
-      - Dynamic lesson list (with subjects, locations, price, spaces, icons/images)
-      - Search and sorting (by subject, location, price, and spaces)
-      - Add-to-cart logic with spaces decrement
-      - Cart view with quantity updates and line totals
-      - Checkout form with client-side validation (Name, Phone, Email)
-      - Thank-you message after successful order
-      
-      All interactivity is controlled via lessons.js (Vue 2).
+  <!--
+    CST3144 Lesson Booking Frontend (Vue.js SPA)
+    Vue single-page app for LessonHub with lesson list, search/sort,
+    shopping cart and checkout validation.
   -->
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,18 +15,18 @@
   <!-- Custom styling -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Google Font (optional, for nicer typography) -->
+  <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome icon library for UI icons (cart, location, etc.) -->
-  <link 
-    rel="stylesheet" 
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" 
+  <!-- Font Awesome icon library -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   />
 
-  <!-- Vue 2 (CDN) — required by coursework spec -->
+  <!-- Vue 2 (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
 </head>
 
@@ -90,7 +82,7 @@
     <main>
       <transition name="fade" mode="out-in">
 
-        <!-- ==================== LESSON LIST VIEW ==================== -->
+        <!-- LESSON LIST VIEW -->
         <section v-if="!showCart" key="lessons" class="lesson-section">
           <h2>Available Lessons</h2>
           <p class="page-subtitle">
@@ -158,7 +150,7 @@
           </div>
         </section>
 
-        <!-- ==================== CART & CHECKOUT VIEW ==================== -->
+        <!-- CART & CHECKOUT VIEW -->
         <section v-else key="cart" class="cart-section">
           <div class="cart-header">
             <button class="back-btn" @click="showCart = false">
@@ -294,9 +286,10 @@
                   <i class="fa-solid fa-paper-plane"></i>
                   Submit Order
                 </button>
+
                 <p v-if="orderMessage" class="error">
-                {{ orderMessage }}
-              </p>
+                  {{ orderMessage }}
+                </p>
               </form>
 
               <div v-if="orderConfirmed" class="thankyou-box">
