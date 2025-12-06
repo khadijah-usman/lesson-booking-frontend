@@ -1,18 +1,17 @@
 /*
-==============================================================
-CST3144 FULL-STACK COURSEWORK — FRONTEND LOGIC (Vue.js SPA)
-==============================================================
+  CST3144 Lesson Booking Frontend Logic
+  Vue.js code for LessonHub: lesson list, search/sort, cart and checkout.
 */
 
 const app = new Vue({
   el: "#app",
 
   data: {
-    // ----- LESSON DATA (from backend API) -----
+    // Lesson data loaded from the backend API
     lessons: [],
 
-    // ----- UI + CART STATE -----
-    // cart items will be: { _id, subject, price, location, quantity, image }
+    // Cart and UI state
+    // cart items look like: { _id, subject, price, location, quantity, image }
     cart: [],
     showCart: false,
     searchTerm: "",
@@ -24,7 +23,7 @@ const app = new Vue({
     phone: "",
     email: "",
 
-    // Validation + messages
+    // Validation and feedback messages
     orderConfirmed: false,
     nameError: "",
     phoneError: "",
@@ -34,7 +33,7 @@ const app = new Vue({
     lastOrderEmail: ""
   },
 
-  // Fetch lessons from backend when app is created
+  // Load lessons from the backend when the app starts
   created: function () {
     fetch("http://localhost:4000/lessons")
       .then(function (response) {
@@ -44,7 +43,7 @@ const app = new Vue({
         function (data) {
           this.lessons = data;
 
-          // reset state (safe)
+          // Reset state when fresh data is loaded
           this.cart = [];
           this.orderConfirmed = false;
           this.orderMessage = "";
@@ -71,7 +70,7 @@ const app = new Vue({
       });
     },
 
-    // Sort filtered lessons
+    // Sort filtered lessons by the selected field and order
     sortedAndFilteredLessons: function () {
       var factor = this.sortOrder === "asc" ? 1 : -1;
 
@@ -91,21 +90,21 @@ const app = new Vue({
       );
     },
 
-    // Total items in cart (for badge + disabling cart button)
+    // Total items in cart (used for the cart badge and button state)
     cartItemCount: function () {
       return this.cart.reduce(function (total, item) {
         return total + item.quantity;
       }, 0);
     },
 
-    // Total price of cart
+    // Total price of all items in the cart
     cartTotal: function () {
       return this.cart.reduce(function (total, item) {
         return total + item.price * item.quantity;
       }, 0);
     },
 
-    // Optional form validity check
+    // Simple form validity check for enabling the checkout button
     isFormValid: function () {
       var nameOk = /^[A-Za-z ]+$/.test(this.name.trim());
       var phoneOk = /^[0-9]{8,15}$/.test(this.phone.trim());
@@ -113,6 +112,7 @@ const app = new Vue({
       return nameOk && phoneOk && emailOk && this.cartItemCount > 0;
     },
 
+    // Optional feedback message if no lessons are found
     feedbackMessage: function () {
       if (this.sortedAndFilteredLessons.length === 0) {
         if (this.searchTerm.trim()) {
@@ -125,10 +125,12 @@ const app = new Vue({
   },
 
   methods: {
+    // Return to the main lesson list view
     goHome: function () {
       this.showCart = false;
     },
 
+    // Toggle between lesson list and cart view
     toggleCart: function () {
       if (this.cartItemCount === 0) return;
       this.showCart = !this.showCart;
@@ -142,11 +144,11 @@ const app = new Vue({
       this.sortOrder = order;
     },
 
-    // ✅ Add a lesson to cart (uses MongoDB _id)
+    // Add a lesson to the cart (using its MongoDB _id)
     addToCart: function (lesson) {
       if (!lesson || lesson.spaces <= 0) return;
 
-      // If user starts a new order, re-enable checkout
+      // If the user starts a new order, allow checkout again
       this.orderConfirmed = false;
 
       var existing = this.cart.find(function (item) {
@@ -166,11 +168,11 @@ const app = new Vue({
         });
       }
 
-      // Decrement available spaces in the UI
+      // Decrease available spaces in the UI
       lesson.spaces -= 1;
     },
 
-    // ✅ Increase quantity (find lesson by _id)
+    // Increase quantity of an item in the cart
     increaseQuantity: function (index) {
       var cartItem = this.cart[index];
       if (!cartItem) return;
@@ -185,7 +187,7 @@ const app = new Vue({
       }
     },
 
-    // ✅ Decrease quantity (find lesson by _id)
+    // Decrease quantity of an item in the cart (or remove it)
     decreaseQuantity: function (index) {
       var cartItem = this.cart[index];
       if (!cartItem) return;
@@ -202,7 +204,7 @@ const app = new Vue({
       }
     },
 
-    // ✅ Remove item (restore spaces using _id match)
+    // Remove an item from the cart and restore its spaces
     removeFromCart: function (index) {
       var cartItem = this.cart[index];
       if (!cartItem) return;
@@ -218,6 +220,7 @@ const app = new Vue({
       this.cart.splice(index, 1);
     },
 
+    // Validate the checkout form and set field error messages
     validateCheckout: function () {
       var valid = true;
 
@@ -270,7 +273,7 @@ const app = new Vue({
       return valid;
     },
 
-    // Checkout: POST order then PUT updated spaces
+    // Checkout: send the order to the backend, then update lesson spaces
     checkout: async function () {
       if (!this.validateCheckout()) return;
 
@@ -291,7 +294,7 @@ const app = new Vue({
       };
 
       try {
-        // 1) POST the order
+        // Send order to the backend
         var orderResponse = await fetch("http://localhost:4000/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -308,24 +311,24 @@ const app = new Vue({
           return;
         }
 
-        // 2) Show thank you message
+        // Show thank-you message
         this.lastOrderName = cleanName;
         this.lastOrderEmail = cleanEmail;
         this.orderConfirmed = true;
         this.orderMessage = "";
 
-        // Keep a copy of what was ordered (so we can update the DB)
+        // Keep a copy of what was ordered (for updating spaces)
         var savedCart = this.cart.map(function (item) {
           return Object.assign({}, item);
         });
 
-        // 3) Clear UI form + cart
+        // Clear form and cart in the UI
         this.name = "";
         this.phone = "";
         this.email = "";
         this.cart = [];
 
-        // 4) Update lesson spaces in MongoDB
+        // Update lesson spaces in MongoDB (PUT /lessons/:id)
         await Promise.all(
           savedCart.map(
             async function (item) {
