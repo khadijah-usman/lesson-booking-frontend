@@ -289,11 +289,14 @@
                 <button
                   class="checkout-btn"
                   type="submit"
-                  :disabled="!cart.length || orderConfirmed"
+                  :disabled="!isFormValid || orderConfirmed"
                 >
                   <i class="fa-solid fa-paper-plane"></i>
                   Submit Order
                 </button>
+                <p v-if="orderMessage" class="error">
+                {{ orderMessage }}
+              </p>
               </form>
 
               <div v-if="orderConfirmed" class="thankyou-box">
