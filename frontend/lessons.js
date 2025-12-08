@@ -3,13 +3,7 @@
   Vue.js code for LessonHub: lesson list, search/sort, cart and checkout.
 */
 
-// Backend API base URL
-// - Local development  -> http://localhost:4000
-// - Deployed frontend  -> Render URL
-const API_BASE_URL =
-  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://localhost:4000"
-    : "https://lesson-booking-backend-6y52.onrender.com";
+const API_BASE = 'https://lesson-booking-backend-6y52.onrender.com';
 
 const app = new Vue({
   el: "#app",
@@ -43,7 +37,7 @@ const app = new Vue({
 
   // Load lessons from the backend when the app starts
   created: function () {
-    fetch(API_BASE_URL + "/lessons")
+    fetch(API_BASE + "/lessons")
       .then(function (response) {
         return response.json();
       })
@@ -87,7 +81,6 @@ const app = new Vue({
           var x = a[this.sortBy];
           var y = b[this.sortBy];
 
-          // Make string sorts consistent
           if (typeof x === "string") x = x.toLowerCase();
           if (typeof y === "string") y = y.toLowerCase();
 
@@ -112,7 +105,7 @@ const app = new Vue({
       }, 0);
     },
 
-    // We keep isFormValid in case you want it in future (not used in :disabled now)
+    // Still here if you want to reuse it
     isFormValid: function () {
       var nameOk = /^[A-Za-z ]+$/.test(this.name.trim());
       var phoneOk = /^[0-9]{8,15}$/.test(this.phone.trim());
@@ -302,8 +295,8 @@ const app = new Vue({
       };
 
       try {
-        // Send order to the backend
-        var orderResponse = await fetch(API_BASE_URL + "/orders", {
+        // Send order to the backend (Render URL)
+        var orderResponse = await fetch(API_BASE + "/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(orderPayload)
@@ -345,7 +338,7 @@ const app = new Vue({
               });
               if (!lesson) return;
 
-              await fetch(API_BASE_URL + "/lessons/" + lesson._id, {
+              await fetch(API_BASE + "/lessons/" + lesson._id, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ spaces: lesson.spaces })
