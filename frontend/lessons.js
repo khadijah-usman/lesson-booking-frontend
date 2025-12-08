@@ -3,8 +3,7 @@
   Vue.js code for LessonHub: lesson list, search/sort, cart and checkout.
 */
 
-// Base URL for the backend API
-// const API_BASE = "http://localhost:4000"; // old local value
+// Base URL of the deployed backend on Render
 const API_BASE = "https://lesson-booking-backend-6y52.onrender.com";
 
 const app = new Vue({
@@ -298,7 +297,7 @@ const app = new Vue({
       };
 
       try {
-        // Send order to the backend
+        // Send order to the backend (POST /orders)
         var orderResponse = await fetch(API_BASE + "/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
