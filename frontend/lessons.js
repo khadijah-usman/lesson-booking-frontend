@@ -3,6 +3,14 @@
   Vue.js code for LessonHub: lesson list, search/sort, cart and checkout.
 */
 
+// Backend API base URL
+// - Local development  -> http://localhost:4000
+// - Deployed frontend  -> Render URL
+const API_BASE_URL =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:4000"
+    : "https://lesson-booking-backend-6y52.onrender.com";
+
 const app = new Vue({
   el: "#app",
 
@@ -35,7 +43,7 @@ const app = new Vue({
 
   // Load lessons from the backend when the app starts
   created: function () {
-    fetch("http://localhost:4000/lessons")
+    fetch(API_BASE_URL + "/lessons")
       .then(function (response) {
         return response.json();
       })
@@ -295,7 +303,7 @@ const app = new Vue({
 
       try {
         // Send order to the backend
-        var orderResponse = await fetch("http://localhost:4000/orders", {
+        var orderResponse = await fetch(API_BASE_URL + "/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(orderPayload)
@@ -337,7 +345,7 @@ const app = new Vue({
               });
               if (!lesson) return;
 
-              await fetch("http://localhost:4000/lessons/" + lesson._id, {
+              await fetch(API_BASE_URL + "/lessons/" + lesson._id, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ spaces: lesson.spaces })
