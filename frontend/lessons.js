@@ -1,15 +1,17 @@
 /*
-  CST3144 Lesson Booking Frontend Logic
-  Vue.js code for LessonHub: lesson list, search/sort, cart and checkout.
+  CST3144 Lesson Booking Frontend Logic (Vue.js)
+  LessonHub SPA: lessons list, search/sort, shopping cart and checkout.
+  Frontend hosted on GitHub Pages, backend on Render (Node + Express + MongoDB Atlas).
 */
 
-const API_BASE = 'https://lesson-booking-backend-6y52.onrender.com';
+/* Base URL of the deployed backend (Render) */
+const API_BASE_URL = "https://lesson-booking-backend-6y52.onrender.com";
 
 const app = new Vue({
   el: "#app",
 
   data: {
-    // Lesson data loaded from the backend API
+    // Lessons loaded from the backend API
     lessons: [],
 
     // Cart and UI state
@@ -37,13 +39,14 @@ const app = new Vue({
 
   // Load lessons from the backend when the app starts
   created: function () {
-    fetch(API_BASE + "/lessons")
+    // GET /lessons (fetch with promises as required by spec)
+    fetch(API_BASE_URL + "/lessons")
       .then(function (response) {
         return response.json();
       })
       .then(
         function (data) {
-          this.lessons = data;
+          this.lessons = data || [];
 
           // Reset state when fresh data is loaded
           this.cart = [];
@@ -57,7 +60,7 @@ const app = new Vue({
   },
 
   computed: {
-    // Filter lessons based on search term
+    // Filter lessons based on search term (front-end search requirement)
     filteredLessons: function () {
       var term = this.searchTerm.trim().toLowerCase();
       if (!term) return this.lessons;
@@ -91,7 +94,7 @@ const app = new Vue({
       );
     },
 
-    // Total items in cart (used for the cart badge and button state)
+    // Total items in cart (for cart badge and button state)
     cartItemCount: function () {
       return this.cart.reduce(function (total, item) {
         return total + item.quantity;
@@ -105,7 +108,7 @@ const app = new Vue({
       }, 0);
     },
 
-    // Still here if you want to reuse it
+    // Kept for reference; actual validation runs in validateCheckout()
     isFormValid: function () {
       var nameOk = /^[A-Za-z ]+$/.test(this.name.trim());
       var phoneOk = /^[0-9]{8,15}$/.test(this.phone.trim());
@@ -126,7 +129,7 @@ const app = new Vue({
   },
 
   methods: {
-    // Return to the main lesson list view
+    // Return to main lesson list view
     goHome: function () {
       this.showCart = false;
     },
@@ -235,7 +238,7 @@ const app = new Vue({
       var trimmedPhone = this.phone.trim();
       var trimmedEmail = this.email.trim();
 
-      // Name validation
+      // Name: required, letters + spaces only
       if (!trimmedName) {
         this.nameError = "Name is required.";
         valid = false;
@@ -244,7 +247,7 @@ const app = new Vue({
         valid = false;
       }
 
-      // Phone validation
+      // Phone: required, digits only, minimum length
       if (!trimmedPhone) {
         this.phoneError = "Phone number is required.";
         valid = false;
@@ -256,7 +259,7 @@ const app = new Vue({
         valid = false;
       }
 
-      // Email validation
+      // Email: required, simple regex check
       if (!trimmedEmail) {
         this.emailError = "Email is required.";
         valid = false;
@@ -295,8 +298,8 @@ const app = new Vue({
       };
 
       try {
-        // Send order to the backend (Render URL)
-        var orderResponse = await fetch(API_BASE + "/orders", {
+        // POST /orders to save a new order
+        var orderResponse = await fetch(API_BASE_URL + "/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(orderPayload)
@@ -318,7 +321,7 @@ const app = new Vue({
         this.orderConfirmed = true;
         this.orderMessage = "";
 
-        // Keep a copy of what was ordered (for updating spaces)
+        // Copy cart (for updating spaces after we clear UI)
         var savedCart = this.cart.map(function (item) {
           return Object.assign({}, item);
         });
@@ -329,7 +332,7 @@ const app = new Vue({
         this.email = "";
         this.cart = [];
 
-        // Update lesson spaces in MongoDB (PUT /lessons/:id)
+        // PUT /lessons/:id to update spaces in MongoDB
         await Promise.all(
           savedCart.map(
             async function (item) {
@@ -338,7 +341,7 @@ const app = new Vue({
               });
               if (!lesson) return;
 
-              await fetch(API_BASE + "/lessons/" + lesson._id, {
+              await fetch(API_BASE_URL + "/lessons/" + lesson._id, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ spaces: lesson.spaces })
